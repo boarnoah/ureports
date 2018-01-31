@@ -10,4 +10,4 @@ Flask
 
 # Instructions
 export FLASK_APP=main.py
-pipenv run flask 
+pipenv run flask run
