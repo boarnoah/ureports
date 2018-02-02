@@ -10,6 +10,10 @@ def index():
 def reports():
 	return render_template('reports.html')
 
+@app.route('/reports/<reportId>')
+def report(reportId):
+	return render_template('report.html')
+
 @app.route('/agents/')
 def agents():
 	return render_template('agents.html')
@@ -20,4 +24,4 @@ def manual():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+	return render_template('404.html'), 404
