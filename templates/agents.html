@@ -1,12 +1,35 @@
 {% extends "default_template.html" %}
 {% set active_page = "agents" %}
-{% block title %}Felines as a Service{% endblock %}
+{% block title %}All Agents{% endblock %}
 {% block head %}
 	{{ super() }}
 {% endblock %}
 {% block content %}
-	<div class="starter-template">
-		<h1>Agents</h1>
-		<p class="lead">WIP, List of agents + relevant data (name, profile pic, last active, # reports generated in the last month etc...)</p>
+	<div class="container">
+		<h2>Agents</h2>
+		<table class="table table-striped table-sm">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Location</th>
+					<th>Reports</th>
+					<th>Last Active</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><a href="/agents/mr-whiskers">Mr Whiskers</a></td>
+					<td>London</td>
+					<td>16 Reports (84% Verified)</td>
+					<td>12 Hours Ago</td>
+				</tr>
+				<tr>
+					<td><a href="/reports/goodboye123">Golden Boy</a></td>
+					<td>New York</td>
+					<td>100 Reports (100% Verified)</td>
+					<td>Inactive</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 {% endblock %}
