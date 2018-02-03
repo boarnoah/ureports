@@ -10,13 +10,17 @@ def index():
 def reports():
 	return flask.render_template('reports.html')
 
-@app.route('/reports/<reportId>')
+@app.route('/report/<reportId>')
 def report(reportId):
-	return flask.render_template('report.html')
+	return flask.render_template('report.html', reportId=reportId)
 
 @app.route('/agents/')
 def agents():
 	return flask.render_template('agents.html')
+
+@app.route('/agent/<agentId>')
+def agent(agentId):
+	return flask.render_template('agent.html', agentId=agentId)
 
 @app.route('/manual/')
 def manual():
