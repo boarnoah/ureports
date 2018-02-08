@@ -3,9 +3,6 @@ import sqlite3
 
 import flask
 
-#import simplereports.views
-#import db
-
 app = flask.Flask('ureports')
 
 app.config.update(dict(
@@ -39,6 +36,10 @@ def close_connection(exception):
 def initdb_command():
 	init_db()
 	print('Initialized the database.')
+
+def get_reports(numReports: int = 20, startIndex: int = 0, ) -> dict:
+	get_db().execute("SELECT * FROM reports ORDER BY time DESC LIMIT ? OFFSET ?", numReports, startIndex)
+	raise NotImplementedError
 
 @app.route('/')
 def index():

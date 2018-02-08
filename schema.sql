@@ -3,6 +3,7 @@ create table agents (
 	id text primary key,
 	name text not null,
 	location text not null,
+	secret text not null,
 	online integer,
 	description text,
 	picture text
