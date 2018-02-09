@@ -37,8 +37,29 @@ def initdb_command():
 	init_db()
 	print('Initialized the database.')
 
+def add_agent(agentId: str, name: str, location: str, secret: str, online: int = None, description: str = None, picture: str = None):
+	get_db.execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+					agentId, name, location, secret, online, description, picture)
+	raise NotImplementedError
+
+def get_agents() -> dict:
+	get_db().execute("SELECT * FROM agents")
+	raise NotImplementedError
+
+def get_agent(agentId: str) -> dict:
+	get_db.execute("SELECT * FROM agents where id = ?", agentId)
+	raise NotImplementedError
+
+def add_report(reportId: str, time: int, location: str, agent: str):
+	get_db.execute("INSERT INTO reports (id, time, location, agent)", reportId, time, location, agent)
+	raise NotImplementedError
+
 def get_reports(numReports: int = 20, startIndex: int = 0, ) -> dict:
 	get_db().execute("SELECT * FROM reports ORDER BY time DESC LIMIT ? OFFSET ?", numReports, startIndex)
+	raise NotImplementedError
+
+def get_report(reportId: str) -> dict:
+	get_db.execute("SELECT * FROM reports WHERE id = ?", reportId)
 	raise NotImplementedError
 
 @app.route('/')
