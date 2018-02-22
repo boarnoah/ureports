@@ -1,1 +1,2 @@
-indent-string: '\t'
+[FORMAT]
+indent-string='\t'
