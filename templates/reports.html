@@ -26,20 +26,15 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td><a href="/report/abc123">abc123</a></td>
-						<td><i class="fa fa-times"></i></td>
-						<td>3</td>
-						<td>01/01/2018 - 15:00</td>
-						<td>Mr Whiskers</td>
-					</tr>
-					<tr>
-						<td><a href="/report/def123">def123</a></td>
-						<td><i class="fa fa-check"></i></td>
-						<td>2</td>
-						<td>02/01/2018 - 15:00</td>
-						<td>Mr Whiskers</td>
-					</tr>
+					{% for report in reports %}
+						<tr>
+								<td><a href="/report/{{report.id}}">{{report.id}}</a></td>
+								<td><i class="fa fa-times"></i></td>
+								<td>--</td>
+								<td>{{report.time | datetime}}</td>
+								<td><a href="/agent/{{report.agent}}">{{report.agent}}</a></td>
+						</tr>
+					{% endfor %}
 				</tbody>
 			</table>
 		</div>

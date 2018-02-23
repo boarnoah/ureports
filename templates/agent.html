@@ -18,7 +18,7 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td><a href="/agents/mr-whiskers">Mr Whiskers</a></td>
+					<td><a href="/agents/{{agent.id}}">{{agent.id}}</a></td>
 					<td>London</td>
 					<td>16 Reports (84% Verified)</td>
 					<td>12 Hours Ago</td>
@@ -40,7 +40,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td><a href="/reports/abc123">abc123</a></td>
+							<td><a href="/agent/{{agent.id}}">{{agent.id}}</a></td>
 							<td><i class="fa fa-times"></i></td>
 							<td>3</td>
 							<td>01/01/2018 - 15:00</td>
@@ -57,7 +57,7 @@
 					</div>
 					<div class="col-6">
 						<b>Description:</b>
-						<p>Who is a good boy now?</p>
+						<p>{{agent.description}}</p>
 					</div>
 				</div>
 				<table class="table table-striped table-sm">
