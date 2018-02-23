@@ -6,20 +6,37 @@ import flask
 
 app = flask.Flask('ureports')
 
-app.config.update(dict(
-	DATABASE=os.path.join(app.root_path, 'data/ureports.db'),
-	DEBUG=True,
-	# Credentials to create new Agents, not suitable for a production app
-	USERNAME='',
-	PASSWORD=''
-))
+with app.app_context():
+	app.config.update(dict(
+		DATA= os.path.join(app.root_path, 'data', flask.current_app.name),
+		DEBUG=True,
+		# Credentials to create new Agents, not suitable for a production app
+		USERNAME='',
+		PASSWORD=''
+	))
+
+	# For convinence:
+	app.config['DATABASE'] = os.path.join(app.config['DATA'], flask.current_app.name + '.db')
+	app.config['IMG_REPORT'] = os.path.join(app.config['DATA'], 'images', 'reports/')
+	app.config['IMG_OTHER'] = os.path.join(app.config['DATA'], 'images', 'other/')
 
 def get_db():
 	db = getattr(flask.g, '_database', None)
 	if db is None:
-		db = flask.g._database = sqlite3.connect(app.config.get('DATABASE'))
+		db = flask.g._database = sqlite3.connect(app.config['DATABASE'])
 		db.row_factory = sqlite3.Row
 	return db
+
+def init_folder() -> bool:
+	folderExsisted = True
+
+	if not os.path.exists(app.config['DATA']):
+		folderExsisted = False
+		os.makedirs(app.config['DATA'])
+		os.makedirs(app.config['IMG_REPORT'])
+		os.makedirs(app.config['IMG_OTHER'])
+
+	return folderExsisted
 
 def init_db():
 	with app.app_context():
@@ -34,8 +51,13 @@ def close_connection(exception):
 	if db is not None:
 		db.close()
 
-@app.cli.command('initdb')
-def initdb_command():
+@app.cli.command('init')
+def init_command():
+	if init_folder():
+		print('Folder tree (', app.config['DATA'], ') already exists. Using it as is', )
+	else:
+		print('Created folder tree at', app.config['DATA'])
+
 	init_db()
 	print('Initialized the database.')
 
