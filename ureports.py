@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import datetime
+import hmac
 
 import flask
 
@@ -15,7 +16,7 @@ with app.app_context():
 		PASSWORD=''
 	))
 
-	# For convinence:
+	# For convenience:
 	app.config['DATABASE'] = os.path.join(app.config['DATA'], flask.current_app.name + '.db')
 	app.config['IMG_REPORT'] = os.path.join(app.config['DATA'], 'images', 'reports/')
 	app.config['IMG_OTHER'] = os.path.join(app.config['DATA'], 'images', 'other/')
@@ -45,6 +46,11 @@ def init_db():
 			db.cursor().executescript(f.read())
 		db.commit()
 		
+def verify_digest(inputData: bytes, inputHash: str) -> bool:
+	key = str.encode(app.config['SECRET'])
+	computedHash = hmac.new(key, msg = inputData, digestmod = 'sha256')
+	return hmac.compare_digest(computedHash.hexdigest(), inputHash)
+
 @app.teardown_appcontext
 def close_connection(exception):
 	db = getattr(flask.g, '_database', None)
@@ -122,6 +128,21 @@ def manual():
 def page_not_found(e):
 	return flask.render_template('404.html'), 404
 
+# API endpoints
+@app.route('/api/add-agent', methods=['POST'])
+def api_add_agent():
+	if not verify_digest(flask.request.data, flask.request.headers['Authorization']):
+		app.logger.warn("Failed HMAC Auth")
+		flask.abort(401)
+
+	payload = flask.request.get_json()
+
+	if get_agent(payload['id']) is not None:
+		#TODO: replace with API error instead
+		app.logger.warn("Attempted to add agent with existing id")
+		flask.abort(404)
+
+	return "", 200
 
 #filters for jinga2 (http://flask.pocoo.org/docs/0.12/templating/#registering-filters)
 @app.template_filter('datetime')
