@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import datetime
+import time
 import hmac
 
 import flask
@@ -51,6 +52,17 @@ def verify_digest(inputData: bytes, inputHash: str) -> bool:
 	computedHash = hmac.new(key, msg = inputData, digestmod = 'sha256')
 	return hmac.compare_digest(computedHash.hexdigest(), inputHash)
 
+def is_dict_empty(keysToCheck: list, dictToCheck: dict) -> bool:
+	for key in keysToCheck:
+		data = dictToCheck.get(key)
+
+		# Check if attr missing or empty str
+		if data is None or not data.strip():
+			app.logger.warn("Attribute: " + key + " was not found or was empty")
+			return True
+	
+	return False
+
 @app.teardown_appcontext
 def close_connection(exception):
 	db = getattr(flask.g, '_database', None)
@@ -67,10 +79,10 @@ def init_command():
 	init_db()
 	print('Initialized the database.')
 
-def add_agent(agentId: str, name: str, location: str, secret: str, online: int = None, description: str = None, picture: str = None):
-	get_db.execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-					agentId, name, location, secret, online, description, picture)
-	raise NotImplementedError
+def add_agent(agentId: str, name: str, location: str, secret: str, online: int, description: str = None, picture: str = None):
+	get_db().execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+					(agentId, name, location, secret, online, description, picture))
+	get_db().commit()
 
 def get_agents() -> list:
 	#TODO: See todo for get_reports
@@ -137,11 +149,26 @@ def api_add_agent():
 
 	payload = flask.request.get_json()
 
-	if get_agent(payload['id']) is not None:
+	if is_dict_empty(['id', 'name', 'location', 'secret'], payload):
+		app.logger.warn("Mandatory fields empty")
+		flask.abort(404)
+
+	if len(payload['id']) > 50:
+		app.logger.warn("ID too long (> 50)")
+		flask.abort(404)
+
+	if len(payload['secret']) > 256:
+		app.logger.warn("Secret too long (> 256)")
+		flask.abort(404)
+
+	if get_agent(payload['id'].strip()) is not None:
 		#TODO: replace with API error instead
 		app.logger.warn("Attempted to add agent with existing id")
 		flask.abort(404)
 
+	add_agent(payload['id'].strip(), payload['name'], payload['location'], payload['secret'], int(time.time()), 
+				payload['description'])
+	
 	return "", 200
 
 #filters for jinga2 (http://flask.pocoo.org/docs/0.12/templating/#registering-filters)
