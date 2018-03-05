@@ -3,10 +3,22 @@ import sqlite3
 import datetime
 import time
 import hmac
+import tempfile
+import json 
+import base64
 
 import flask
+import PIL
+import werkzeug
 
 app = flask.Flask('ureports')
+
+IMG_TYPE = "PNG"
+IMG_SIZE = 2 * (10 ** 6)
+IMG_OTHER_X = 500
+IMG_OTHER_Y = 500
+IMG_REPORT_X = 2000
+IMG_REPORT_Y = 2000
 
 with app.app_context():
 	app.config.update(dict(
@@ -46,8 +58,8 @@ def init_db():
 		with app.open_resource('schema.sql', mode='r') as f:
 			db.cursor().executescript(f.read())
 		db.commit()
-		
-def verify_digest(inputData: bytes, inputHash: str) -> bool:
+
+def verify_digest_json(inputData: str, inputHash: str) -> bool:
 	key = str.encode(app.config['SECRET'])
 	computedHash = hmac.new(key, msg = inputData, digestmod = 'sha256')
 	return hmac.compare_digest(computedHash.hexdigest(), inputHash)
@@ -62,6 +74,40 @@ def is_dict_empty(keysToCheck: list, dictToCheck: dict) -> bool:
 			return True
 	
 	return False
+
+def valid_image_type(fileName:str) -> bool:
+	secureFilename = werkzeug.utils.secure_filename(fileName)
+	fileExtension = secureFilename.rsplit('.', 1)[1].lower()
+	return '.' in secureFilename and fileExtension == IMG_TYPE
+
+def temp_image(image:bytes):
+	tempFile = SpooledTemporaryFile()
+	PIL.Image.save(tempFile, format=IMG_TYPE)
+	return PIL.Image.open(tempFile)
+
+# dimensions + file size
+def valid_image_size(image:bytes, x:int, y:int, size:int) -> bool:
+	#tempImg = tempfile.SpooledTemporaryFile()
+
+	#TODO: Checks
+	return True
+
+def save_square_image(fileName:str, image:str, location:str) -> str:
+	image = base64.b64decode(image)
+	tempImage = temp_image(image)
+
+	print("Saved temp copy of image")
+
+	# #TODO: Replace with exceptions
+	# if not valid_image_type(image):
+	# 	app.logger.warn("Uploaded image, not valid type")
+	# 	return False
+	
+	# #if not valid_image_size():
+	# secureFileName = os.path.join(location, werkzeug.utils.secure_filename(fileName) + ".jpg")
+	# image.save(secureFileName)
+
+	return secureFileName
 
 @app.teardown_appcontext
 def close_connection(exception):
@@ -169,6 +215,26 @@ def api_add_agent():
 	add_agent(payload['id'].strip(), payload['name'], payload['location'], payload['secret'], int(time.time()), 
 				payload['description'])
 	
+	return "", 200
+
+@app.route('/api/add-agent-image', methods=['POST'])
+def add_agent_image():
+	#if not verify_digest(flask.request.form, flask.request.headers['Authorization']):
+	#	app.logger.warn("Failed HMAC Authorization")
+	#	return ""
+	payload = flask.request.get_json()
+
+	if is_dict_empty(['id', 'image'], payload):
+		app.logger.warn("Mandatory fields empty")
+		flask.abort(404)
+
+	if get_agent(payload['id'].strip()) is None:
+		#TODO: replace with API error instead
+		app.logger.warn("Attempted to upload picture for nonexistent agent")
+		flask.abort(404)
+
+	save_square_image(payload['id'].strip(), payload['image'], app.config['IMG_OTHER'])
+
 	return "", 200
 
 #filters for jinga2 (http://flask.pocoo.org/docs/0.12/templating/#registering-filters)
