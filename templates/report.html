@@ -6,7 +6,7 @@
 {% endblock %}
 {% block content %}
 	<div class="container">
-		<a href="/reports/">Reports</a> <i class="fa fa-angle-right"></i> <a href="/report/{{report.id}}">{{report.id}}</a>
+		<a href="/reports/">Reports</a> <i class="fa fa-angle-right"></i> <a href="/reports/{{report.id}}">{{report.id}}</a>
 		<h2>Report - {{report.id}}</h2>
 		<div class="table-responsive">
 			<table class="table table-striped table-sm">
@@ -21,11 +21,11 @@
 				</thead>
 				<tbody>
 					<tr>
-						<td><a href="/report/{{report.id}}">{{report.id}}</a></td>
+						<td><a href="/reports/{{report.id}}">{{report.id}}</a></td>
 						<td><i class="fa fa-times"></i></td>
 						<td>--</td>
 						<td>{{report.time | datetime}}</td>
-						<td><a href="/agent/{{report.agent}}">{{report.agent}}</a><</td>
+						<td><a href="/agents/{{report.agent}}">{{report.agent}}</a><</td>
 					</tr>
 				</tbody>
 			</table>

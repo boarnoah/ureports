@@ -156,7 +156,7 @@ def index():
 def reports():
 	return flask.render_template('reports.html', reports=get_reports())
 
-@app.route('/report/<reportId>')
+@app.route('/reports/<reportId>')
 def report(reportId):
 	report = get_report(reportId)
 
@@ -165,11 +165,11 @@ def report(reportId):
 
 	return flask.render_template('report.html', report=report)
 
-@app.route('/agents/')
+@app.route('/agents/', methods=['GET'])
 def agents():
 	return flask.render_template('agents.html', agents=get_agents())
 
-@app.route('/agent/<agentId>')
+@app.route('/agents/<agentId>', methods=['GET'])
 def agent(agentId):
 	agent = get_agent(agentId)
 
@@ -187,7 +187,7 @@ def page_not_found(e):
 	return flask.render_template('404.html'), 404
 
 # API endpoints
-@app.route('/api/add-agent', methods=['POST'])
+@app.route('/api/agents', methods=['POST'])
 def api_add_agent():
 	if not verify_digest(flask.request.data, flask.request.headers['Authorization']):
 		app.logger.warn("Failed HMAC Auth")
@@ -217,7 +217,7 @@ def api_add_agent():
 	
 	return "", 200
 
-@app.route('/api/add-agent-image', methods=['POST'])
+@app.route('/api/agents/image', methods=['POST'])
 def add_agent_image():
 	#if not verify_digest(flask.request.form, flask.request.headers['Authorization']):
 	#	app.logger.warn("Failed HMAC Authorization")
