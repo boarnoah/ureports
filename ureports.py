@@ -11,7 +11,7 @@ import flask
 from PIL import Image as pilImage
 import werkzeug
 
-app = flask.Flask('ureports')
+app = flask.Flask("ureports")
 
 IMG_TYPE = "png"
 IMG_AGENT_XY = (500, 500)
@@ -19,44 +19,44 @@ IMG_REPORT_XY = (2000, 2000)
 
 with app.app_context():
 	app.config.update(dict(
-		DATA= os.path.join(app.root_path, 'data', flask.current_app.name),
+		DATA= os.path.join(app.root_path, "data", flask.current_app.name),
 		DEBUG=True,
-		SECRET=''
+		SECRET=""
 	))
 
 	# For convenience:
-	app.config['DATABASE'] = os.path.join(app.config['DATA'], flask.current_app.name + '.db')
-	app.config['IMG_REPORT'] = os.path.join(app.config['DATA'], 'images', 'reports/')
-	app.config['IMG_AGENT'] = os.path.join(app.config['DATA'], 'images', 'agent/')
+	app.config["DATABASE"] = os.path.join(app.config["DATA"], flask.current_app.name + ".db")
+	app.config["IMG_REPORT"] = os.path.join(app.config["DATA"], "images", "reports/")
+	app.config["IMG_AGENT"] = os.path.join(app.config["DATA"], "images", "agent/")
 
 def get_db():
-	db = getattr(flask.g, '_database', None)
+	db = getattr(flask.g, "_database", None)
 	if db is None:
-		db = flask.g._database = sqlite3.connect(app.config['DATABASE'])
+		db = flask.g._database = sqlite3.connect(app.config["DATABASE"])
 		db.row_factory = sqlite3.Row
 	return db
 
 def init_folder() -> bool:
-	folderExsisted = True
+	folderExisted= True
 
-	if not os.path.exists(app.config['DATA']):
-		folderExsisted = False
-		os.makedirs(app.config['DATA'])
-		os.makedirs(app.config['IMG_REPORT'])
-		os.makedirs(app.config['IMG_AGENT'])
+	if not os.path.exists(app.config["DATA"]):
+		folderExisted = False
+		os.makedirs(app.config["DATA"])
+		os.makedirs(app.config["IMG_REPORT"])
+		os.makedirs(app.config["IMG_AGENT"])
 
-	return folderExsisted
+	return folderExisted
 
 def init_db():
 	with app.app_context():
 		db = get_db()
-		with app.open_resource('schema.sql', mode='r') as f:
+		with app.open_resource("schema.sql", mode="r") as f:
 			db.cursor().executescript(f.read())
 		db.commit()
 
 def verify_digest_json(inputData: str, inputHash: str) -> bool:
-	key = str.encode(app.config['SECRET'])
-	computedHash = hmac.new(key, msg = inputData, digestmod = 'sha256')
+	key = str.encode(app.config["SECRET"])
+	computedHash = hmac.new(key, msg = inputData, digestmod = "sha256")
 	return hmac.compare_digest(computedHash.hexdigest(), inputHash)
 
 def is_dict_empty(keysToCheck: list, dictToCheck: dict) -> bool:
@@ -77,7 +77,7 @@ def valid_image_type(fileName:str) -> bool:
 
 def save_agent_image(fileName:str, image:str, location:str) -> str:
 	image = base64.b64decode(image)
-	secureFilePath = os.path.join(app.config['IMG_AGENT'], werkzeug.utils.secure_filename(fileName) + '.' + IMG_TYPE)
+	secureFilePath = os.path.join(app.config["IMG_AGENT"], werkzeug.utils.secure_filename(fileName) + '.' + IMG_TYPE)
 
 	tempFile = tempfile.SpooledTemporaryFile()
 	tempFile.write(image)
@@ -95,19 +95,19 @@ def save_agent_image(fileName:str, image:str, location:str) -> str:
 
 @app.teardown_appcontext
 def close_connection(exception):
-	db = getattr(flask.g, '_database', None)
+	db = getattr(flask.g, "_database", None)
 	if db is not None:
 		db.close()
 
-@app.cli.command('init')
+@app.cli.command("init")
 def init_command():
 	if init_folder():
-		print('Folder tree (', app.config['DATA'], ') already exists. Using it as is', )
+		print("Folder tree (", app.config["DATA"], ") already exists. Using it as is")
 	else:
-		print('Created folder tree at', app.config['DATA'])
+		print("Created folder tree at", app.config["DATA"])
 
 	init_db()
-	print('Initialized the database.')
+	print("Initialized the database.")
 
 def add_agent(agentId: str, name: str, location: str, secret: str, online: int, description: str = None, picture: str = None):
 	get_db().execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
@@ -150,99 +150,99 @@ def get_reports(numReports: int = 20, startIndex: int = 0) -> list:
 def get_report(reportId: str) -> sqlite3.Row:
 	return get_db().execute("SELECT * FROM reports WHERE id = ?", (reportId, )).fetchone()
 
-@app.route('/')
+@app.route("/")
 def index():
-	return flask.render_template('index.html')
+	return flask.render_template("index.html")
 
-@app.route('/reports/')
+@app.route("/reports/")
 def reports():
-	return flask.render_template('reports.html', reports=get_reports())
+	return flask.render_template("reports.html", reports=get_reports())
 
-@app.route('/reports/<reportId>')
+@app.route("/reports/<reportId>")
 def report(reportId):
 	report = get_report(reportId)
 
 	if report is None:
 		flask.abort(404)
 
-	return flask.render_template('report.html', report=report)
+	return flask.render_template("report.html", report=report)
 
-@app.route('/agents/', methods=['GET'])
+@app.route("/agents/", methods=["GET"])
 def agents():
-	return flask.render_template('agents.html', agents=get_agents())
+	return flask.render_template("agents.html", agents=get_agents())
 
-@app.route('/agents/<agentId>', methods=['GET'])
+@app.route("/agents/<agentId>", methods=["GET"])
 def agent(agentId):
 	agent = get_agent(agentId)
 
 	if agent is None:
 		flask.abort(404)
 
-	return flask.render_template('agent.html', agent=agent)
+	return flask.render_template("agent.html", agent=agent)
 
-@app.route('/manual/')
+@app.route("/manual/")
 def manual():
-	return flask.render_template('manual.html')
+	return flask.render_template("manual.html")
 
 @app.errorhandler(404)
 def page_not_found(e):
-	return flask.render_template('404.html'), 404
+	return flask.render_template("404.html"), 404
 
 # API endpoints
-@app.route('/api/agents', methods=['POST'])
+@app.route("/api/agents", methods=["POST"])
 def api_add_agent():
-	if not verify_digest(flask.request.data, flask.request.headers['Authorization']):
+	if not verify_digest(flask.request.data, flask.request.headers["Authorization"]):
 		app.logger.warn("Failed HMAC Auth")
 		flask.abort(401)
 
 	payload = flask.request.get_json()
 
-	if is_dict_empty(['id', 'name', 'location', 'secret'], payload):
+	if is_dict_empty(["id", "name", "location", "secret"], payload):
 		app.logger.warn("Mandatory fields empty")
 		flask.abort(404)
 
-	if len(payload['id']) > 50:
+	if len(payload["id"]) > 50:
 		app.logger.warn("ID too long (> 50)")
 		flask.abort(404)
 
-	if len(payload['secret']) > 256:
+	if len(payload["secret"]) > 256:
 		app.logger.warn("Secret too long (> 256)")
 		flask.abort(404)
 
-	if get_agent(payload['id'].strip()) is not None:
+	if get_agent(payload["id"].strip()) is not None:
 		#TODO: replace with API error instead
 		app.logger.warn("Attempted to add agent with existing id")
 		flask.abort(404)
 
-	add_agent(payload['id'].strip(), payload['name'], payload['location'], payload['secret'], int(time.time()), 
-				payload['description'])
+	add_agent(payload["id"].strip(), payload["name"], payload["location"], payload["secret"], int(time.time()), 
+				payload["description"])
 	
 	return "", 200
 
-@app.route('/api/agents/image', methods=['POST'])
+@app.route("/api/agents/image", methods=["POST"])
 def add_agent_image():
-	#if not verify_digest(flask.request.form, flask.request.headers['Authorization']):
+	#if not verify_digest(flask.request.form, flask.request.headers["Authorization"]):
 	#	app.logger.warn("Failed HMAC Authorization")
 	#	return ""
 	payload = flask.request.get_json()
 
-	if is_dict_empty(['id', 'image'], payload):
+	if is_dict_empty(["id", "image"], payload):
 		app.logger.warn("Mandatory fields empty")
 		flask.abort(404)
 
-	if get_agent(payload['id'].strip()) is None:
+	if get_agent(payload["id"].strip()) is None:
 		#TODO: replace with API error instead
 		app.logger.warn("Attempted to upload picture for nonexistent agent")
 		flask.abort(404)
 
 	try:
-		imagePath = save_agent_image(payload['id'].strip(), payload['image'], app.config['IMG_AGENT'])
+		imagePath = save_agent_image(payload["id"].strip(), payload["image"], app.config["IMG_AGENT"])
 	except (KeyError, IOError):
 		flask.abort(500)
 
 	return "", 200
 
 #filters for jinga2 (http://flask.pocoo.org/docs/0.12/templating/#registering-filters)
-@app.template_filter('datetime')
+@app.template_filter("datetime")
 def filter_datetime(timestamp:str) -> str:
 	return datetime.datetime.fromtimestamp(timestamp)
