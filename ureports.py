@@ -8,31 +8,26 @@ import json
 import base64
 
 import flask
-import PIL
+from PIL import Image as pilImage
 import werkzeug
 
 app = flask.Flask('ureports')
 
-IMG_TYPE = "PNG"
-IMG_SIZE = 2 * (10 ** 6)
-IMG_OTHER_X = 500
-IMG_OTHER_Y = 500
-IMG_REPORT_X = 2000
-IMG_REPORT_Y = 2000
+IMG_TYPE = "png"
+IMG_AGENT_XY = (500, 500)
+IMG_REPORT_XY = (2000, 2000)
 
 with app.app_context():
 	app.config.update(dict(
 		DATA= os.path.join(app.root_path, 'data', flask.current_app.name),
 		DEBUG=True,
-		# Credentials to create new Agents, not suitable for a production app
-		USERNAME='',
-		PASSWORD=''
+		SECRET=''
 	))
 
 	# For convenience:
 	app.config['DATABASE'] = os.path.join(app.config['DATA'], flask.current_app.name + '.db')
 	app.config['IMG_REPORT'] = os.path.join(app.config['DATA'], 'images', 'reports/')
-	app.config['IMG_OTHER'] = os.path.join(app.config['DATA'], 'images', 'other/')
+	app.config['IMG_AGENT'] = os.path.join(app.config['DATA'], 'images', 'agent/')
 
 def get_db():
 	db = getattr(flask.g, '_database', None)
@@ -48,7 +43,7 @@ def init_folder() -> bool:
 		folderExsisted = False
 		os.makedirs(app.config['DATA'])
 		os.makedirs(app.config['IMG_REPORT'])
-		os.makedirs(app.config['IMG_OTHER'])
+		os.makedirs(app.config['IMG_AGENT'])
 
 	return folderExsisted
 
@@ -80,34 +75,23 @@ def valid_image_type(fileName:str) -> bool:
 	fileExtension = secureFilename.rsplit('.', 1)[1].lower()
 	return '.' in secureFilename and fileExtension == IMG_TYPE
 
-def temp_image(image:bytes):
-	tempFile = SpooledTemporaryFile()
-	PIL.Image.save(tempFile, format=IMG_TYPE)
-	return PIL.Image.open(tempFile)
-
-# dimensions + file size
-def valid_image_size(image:bytes, x:int, y:int, size:int) -> bool:
-	#tempImg = tempfile.SpooledTemporaryFile()
-
-	#TODO: Checks
-	return True
-
-def save_square_image(fileName:str, image:str, location:str) -> str:
+def save_agent_image(fileName:str, image:str, location:str) -> str:
 	image = base64.b64decode(image)
-	tempImage = temp_image(image)
+	secureFilePath = os.path.join(app.config['IMG_AGENT'], werkzeug.utils.secure_filename(fileName) + '.' + IMG_TYPE)
 
-	print("Saved temp copy of image")
-
-	# #TODO: Replace with exceptions
-	# if not valid_image_type(image):
-	# 	app.logger.warn("Uploaded image, not valid type")
-	# 	return False
+	tempFile = tempfile.SpooledTemporaryFile()
+	tempFile.write(image)
 	
-	# #if not valid_image_size():
-	# secureFileName = os.path.join(location, werkzeug.utils.secure_filename(fileName) + ".jpg")
-	# image.save(secureFileName)
+	try:
+		print(secureFilePath)
+		image = pilImage.open(tempFile)
+		image.thumbnail(IMG_AGENT_XY)
+		image.save(secureFilePath, format=IMG_TYPE)
+	except (KeyError, IOError) as err:
+		app.logger.warn("Failed save temp image! Broken file / unknown format")
+		raise
 
-	return secureFileName
+	return secureFilePath
 
 @app.teardown_appcontext
 def close_connection(exception):
@@ -129,6 +113,24 @@ def add_agent(agentId: str, name: str, location: str, secret: str, online: int, 
 	get_db().execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
 					(agentId, name, location, secret, online, description, picture))
 	get_db().commit()
+
+def update_agent(agentId:str, name:str = None, location:str = None, secret:str = None, online:int = None, description:str = None, picture:str = None):
+	db = get_db()
+	
+	if name is not None:
+		db.execute("UPDATE agents SET name = ? WHERE id = ?", (name, agentId))
+	if location is not None:
+		db.execute("UPDATE agents SET location = ? where id = ?", (location, agentId))
+	if secret is not None:
+		db.execute("UPDATE agents SET secret = ? where id = ?", (secret, agentId))
+	if online is not None:
+		db.execute("UPDATE agents SET online = ? where id = ?", (online, agentId))
+	if description is not None:
+		db.execute("UPDATE agents SET description = ? where id = ?", (description, agentId))
+	if picture is not None:
+		db.execute("UPDATE agents SET picture = ? where id = ?", (picture, agentId))
+	
+	db.commit()
 
 def get_agents() -> list:
 	#TODO: See todo for get_reports
@@ -233,7 +235,10 @@ def add_agent_image():
 		app.logger.warn("Attempted to upload picture for nonexistent agent")
 		flask.abort(404)
 
-	save_square_image(payload['id'].strip(), payload['image'], app.config['IMG_OTHER'])
+	try:
+		imagePath = save_agent_image(payload['id'].strip(), payload['image'], app.config['IMG_AGENT'])
+	except (KeyError, IOError):
+		flask.abort(500)
 
 	return "", 200
 
