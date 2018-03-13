@@ -104,3 +104,4 @@ ENV/
 .vscode/
 static/images/
 data/
+\.idea/

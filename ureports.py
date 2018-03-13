@@ -54,7 +54,7 @@ def init_db():
 			db.cursor().executescript(f.read())
 		db.commit()
 
-def verify_digest_json(inputData: str, inputHash: str) -> bool:
+def verify_digest(inputData: str, inputHash: str) -> bool:
 	key = str.encode(app.config["SECRET"])
 	computedHash = hmac.new(key, msg = inputData, digestmod = "sha256")
 	return hmac.compare_digest(computedHash.hexdigest(), inputHash)
@@ -180,6 +180,18 @@ def agent(agentId):
 
 	return flask.render_template("agent.html", agent=agent)
 
+@app.route("/agents/<agentId>/image", methods=["GET"])
+def get_agent_image(agentId:str):
+	agent = get_agent(agentId.strip())
+
+	if agent is None:
+		flask.abort(404)
+
+	if agent["picture"] is None:
+		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
+	else:
+		return flask.send_from_directory(app.config["DATA"], agent["picture"])
+
 @app.route("/manual/")
 def manual():
 	return flask.render_template("manual.html")
@@ -221,22 +233,26 @@ def api_add_agent():
 
 @app.route("/api/agents/image", methods=["POST"])
 def add_agent_image():
-	#if not verify_digest(flask.request.form, flask.request.headers["Authorization"]):
-	#	app.logger.warn("Failed HMAC Authorization")
-	#	return ""
+	if not verify_digest(flask.request.data, flask.request.headers["Authorization"]):
+		app.logger.warn("Failed HMAC Auth")
+		flask.abort(401)
+
 	payload = flask.request.get_json()
+	agentId = payload["id"].strip()
 
 	if is_dict_empty(["id", "image"], payload):
 		app.logger.warn("Mandatory fields empty")
 		flask.abort(404)
 
-	if get_agent(payload["id"].strip()) is None:
+	if get_agent(agentId) is None:
 		#TODO: replace with API error instead
 		app.logger.warn("Attempted to upload picture for nonexistent agent")
 		flask.abort(404)
 
 	try:
-		imagePath = save_agent_image(payload["id"].strip(), payload["image"], app.config["IMG_AGENT"])
+		imagePath = save_agent_image(agentId, payload["image"], app.config["IMG_AGENT"])
+		imageRelPath = os.path.relpath(imagePath, start=app.config["DATA"])
+		update_agent(agentId, picture=imageRelPath)
 	except (KeyError, IOError):
 		flask.abort(500)
 

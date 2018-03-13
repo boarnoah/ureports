@@ -53,7 +53,7 @@
 				<h3>Other</h3>
 				<div class="row">
 					<div class="col-6">
-						<img src="{{ url_for('static', filename='images/dog.jpg') }}" class="img-thumbnail agent-thumbnail"></img>
+						<img src="{{ url_for('get_agent_image', agentId=agent.id) }}" class="img-thumbnail agent-thumbnail"></img>
 					</div>
 					<div class="col-6">
 						<b>Description:</b>
