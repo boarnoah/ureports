@@ -119,7 +119,7 @@ def api_add_agent():
 	return "", 200
 
 @app.route("/api/agents/image", methods=["POST"])
-def add_agent_image():
+def api_add_agent_image():
 	if not utils.verify_digest(flask.request.data, flask.request.headers["Authorization"]):
 		app.logger.warning("Failed HMAC Auth")
 		flask.abort(401)
