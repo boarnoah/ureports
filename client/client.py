@@ -47,7 +47,7 @@ def add_agent() -> None:
 		}
 
 		try:
-			requests.post(url, json=json_payload, headers=headers)
+			requests.post(url, json=agent, headers=headers)
 		except requests.exceptions.RequestException as req_exception:
 			print(req_exception)
 			print("Failed to /api/agents for agent: ", agent["id"])

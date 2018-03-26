@@ -114,7 +114,7 @@ def api_add_agent():
 		flask.abort(404)
 
 	db.add_agent(payload["id"].strip(), payload["name"], payload["location"], payload["secret"], int(time.time()), 
-				payload["description"])
+				payload.get("description"))
 
 	return "", 200
 
