@@ -2,6 +2,7 @@ import hmac
 import json
 import os
 import base64
+import time 
 
 import requests
 
@@ -27,7 +28,32 @@ AGENTS = [
 
 REPORTS = [
 	{
-		""
+		"agent": "mr-whiskers-jr",
+		"time": int(time.time()),
+		"images": [
+			{
+				"image": "sacks.jpg",
+				"location": "WP-1"
+			},
+			{
+				"image": "sacks.jpg",
+				"location": "WP-2"
+			}
+		]
+	},
+	{
+		"agent": "golden-boy",
+		"time": int(time.time()) + (60*60*24),
+		"images": [
+			{
+				"image": "sacks.jpg",
+				"location": "WP-1"
+			},
+			{
+				"image": "mouse.jpg",
+				"location": "WP-2"
+			}
+		]
 	}
 ]
 
@@ -50,10 +76,10 @@ def add_agent() -> None:
 			requests.post(url, json=agent, headers=headers)
 		except requests.exceptions.RequestException as req_exception:
 			print(req_exception)
-			print("Failed to /api/agents for agent: ", agent["id"])
+			print("Failed to ", url, " for agent: ", agent["id"])
 			continue
 
-		print("Sending /api/agents for agent: ", agent["id"])
+		print("Sending ", url, " for agent: ", agent["id"])
 
 def add_agent_images():
 	url = HOST + "/api/agents/image"
@@ -76,10 +102,45 @@ def add_agent_images():
 			requests.post(url, json=payload, headers=headers)
 		except requests.exceptions.RequestException as req_exception:
 			print(req_exception)
-			print("Failed to /api/agents/image for agent: ", agent["id"])
+			print("Failed to ", url, "for agent: ", agent["id"])
 			continue
 
-		print("Sending /api/agents/image for agent: ", agent["id"])
+		print("Sending ", url, "for agent: ", agent["id"])
+
+def add_report():
+	url = HOST + "/api/reports"
+	for report in REPORTS:
+
+		payload = {
+			"agent": report["agent"],
+			"time": report["time"],
+			"images": []
+		}
+
+		for image in report["images"]:
+			iamge_file = open(os.path.join(os.getcwd(), "images", image["image"]), mode="rb")
+			image_payload = {
+				"image": bytes.decode(base64.b64encode(iamge_file.read())),
+				"location": image["location"]
+			}
+
+			payload["images"].append(image_payload)
+
+		json_payload = json.dumps(payload)
+
+		headers = {
+			"Authorization": calc_hmac(str.encode(json_payload))
+		}
+
+		try:
+			requests.post(url, json=payload, headers=headers)
+		except requests.exceptions.RequestException as req_exception:
+			print(req_exception)
+			print("Failed to ", url, " for report with agent id: : ", report["agent"])
+			continue
+
+		print("Sending", url, " for report with agent id: ", report["agent"])
 
 add_agent()
 add_agent_images()
+add_report()
