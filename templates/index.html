@@ -49,18 +49,14 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr>
-								<td><a href="/agents/mr-whiskers">Mr Whiskers</a></td>
-								<td>London</td>
-								<td>16 Reports (84% Verified)</td>
-								<td>12 Hours Ago</td>
-							</tr>
-							<tr>
-								<td><a href="/reports/goodboye123">Golden Boy</a></td>
-								<td>New York</td>
-								<td>100 Reports (100% Verified)</td>
-								<td>Inactive</td>
-							</tr>
+							{% for agent in agents %}
+								<tr>
+									<td><a href="/agents/{{agent.id}}">{{agent.id}}</a></td>
+									<td>{{agent.location}}</td>
+									<td>16 Reports (84% Verified)</td>
+									<td>{{agent.online | datetime}}</td>
+								</tr>
+							{% endfor %}
 						</tbody>
 					</table>
 			</div>

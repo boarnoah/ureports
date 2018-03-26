@@ -39,7 +39,8 @@ def close_app(e):
 
 @app.route("/")
 def index():
-	return flask.render_template("index.html")
+	#TODO: Change this to only get first 10 reports/agents etc... if necessary
+	return flask.render_template("index.html", agents=db.get_agents(), reports=db.get_reports())
 
 @app.route("/reports/")
 def reports():
