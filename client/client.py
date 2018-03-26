@@ -56,8 +56,30 @@ def add_agent() -> None:
 		print("Sending /api/agents for agent: ", agent["id"])
 
 def add_agent_images():
-	url = HOST + "/api/AGENTS/image"
-	raise NotImplementedError
+	url = HOST + "/api/agents/image"
+
+	for agent in AGENTS:
+		image = open(os.path.join(os.getcwd(), "images", agent["image"]), mode="rb")
+
+		payload = {
+			"id": agent["id"],
+			"image": bytes.decode(base64.b64encode(image.read()))
+		}
+
+		json_payload = json.dumps(payload)
+
+		headers = {
+			"Authorization": calc_hmac(str.encode(json_payload))
+		}
+
+		try:
+			requests.post(url, json=payload, headers=headers)
+		except requests.exceptions.RequestException as req_exception:
+			print(req_exception)
+			print("Failed to /api/agents/image for agent: ", agent["id"])
+			continue
+
+		print("Sending /api/agents/image for agent: ", agent["id"])
 
 add_agent()
-#add_agent_images()
+add_agent_images()
