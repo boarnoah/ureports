@@ -1,10 +1,12 @@
 import hmac
 import json
+import os
+import base64
 
 import requests
 
 SECRET = "password"
-HOST = "https://localhost:5000"
+HOST = "http://localhost:5000"
 
 AGENTS = [
 	{
@@ -35,7 +37,7 @@ def calc_hmac(payload: bytes) -> str:
 
 
 def add_agent() -> None:
-	url = HOST + "/api/AGENTS"
+	url = HOST + "/api/agents"
 
 	for agent in AGENTS:
 		json_payload = json.dumps(agent)
@@ -48,10 +50,10 @@ def add_agent() -> None:
 			requests.post(url, json=json_payload, headers=headers)
 		except requests.exceptions.RequestException as req_exception:
 			print(req_exception)
-			print("Failed to /api/AGENTS for agent: ", agent["id"])
+			print("Failed to /api/agents for agent: ", agent["id"])
 			continue
 
-		print("Sending /api/AGENTS for agent: ", agent["id"])
+		print("Sending /api/agents for agent: ", agent["id"])
 
 def add_agent_images():
 	url = HOST + "/api/AGENTS/image"
