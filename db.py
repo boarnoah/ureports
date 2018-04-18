@@ -93,3 +93,9 @@ def get_report(report_id: str) -> sqlite3.Row:
 def add_report_image(image_id:str, image_path:str, location: str, image_confirmed: int, report_id:str):
 	get_db().execute("INSERT INTO images (id, path, location, confirmed, report) VALUES (?, ?, ?, ?, ?)", (image_id, image_path, location, image_confirmed, report_id))
 	get_db().commit()
+
+def get_report_image(image_id: str) -> sqlite3.Row:
+	return get_db().execute("SELECT * FROM images WHERE id = ?", (image_id))
+
+def get_report_images(report_id: str) -> list:
+	return get_db().execute("SELECT * FROM images WHERE report = ?", (report_id)).fetchall()

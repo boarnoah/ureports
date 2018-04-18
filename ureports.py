@@ -50,6 +50,7 @@ def reports():
 @app.route("/reports/<report_id>")
 def report(report_id):
 	db_report = db.get_report(report_id)
+	db_report["images"] = db.get_report_images(report_id)
 
 	if db_report is None:
 		flask.abort(404)
@@ -69,6 +70,7 @@ def agent(agent_id):
 
 	return flask.render_template("agent.html", agent=db_agent)
 
+#TODO: refactor to get rid duplicate code
 @app.route("/agents/<agent_id>/image", methods=["GET"])
 def get_agent_image(agent_id: str):
 	db_agent = db.get_agent(agent_id.strip())
@@ -80,6 +82,30 @@ def get_agent_image(agent_id: str):
 		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
 
 	return flask.send_from_directory(app.config["DATA"], db_agent["picture"])
+
+@app.route("/reports/<report_id>/image/<image_id>", methods=["GET"])
+def get_report_image(image_id: str):
+	db_report_image = db.get_report_image(image_id.strip())
+
+	if db_report_image is None:
+		flask.abort(404)
+
+	if db_report_image["path"] is None:
+		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
+
+	return flask.send_from_directory(app.config["DATA"], db_report_image["path"])
+
+@app.route("/reports/<report_id>/image/<image_id>/thumb", methods=["GET"])
+def get_report_image_thumb(image_id: str):
+	db_report_image = db.get_report_image(image_id.strip())
+
+	if db_report_image is None:
+		flask.abort(404)
+
+	if db_report_image["path"] is None:
+		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
+
+	return flask.send_from_directory(app.config["DATA"], "thumb_" + db_report_image["path"])
 
 @app.route("/manual/")
 def manual():
@@ -160,16 +186,16 @@ def api_add_report():
 		app.logger.warning("Mandatory fields empty")
 		flask.abort(404)
 
-	agent =  db.get_agent(agent_id)
+	db_agent =  db.get_agent(agent_id)
 	if agent is None:
 		#TODO: replace with API error instead
 		app.logger.warning("Attempted to upload report for nonexistent agent")
 		flask.abort(404)
 
 	#TODO: replace with proper short unique id generation
-	report_id = utils.generate_short_uuid(agent_id + str(payload["time"]), 8)
-
-	db.add_report(report_id, payload["time"], agent["location"], agent_id)
+	report_id = utils.generate_short_uuid(str(payload["time"]) + agent_id, 8)
+	
+	db.add_report(report_id, payload["time"], db_agent["location"], agent_id)
 
 	for report_image in payload["images"]:
 		image_id = report_id + "_" + report_image["location"]
@@ -181,7 +207,7 @@ def api_add_report():
 			db.add_report_image(image_id, image_rel_path, report_image["location"], 0, report_id)
 
 			#thumbnail image for smaller version for dashboard
-			images.save_image(image_id + "_thumb", report_image["image"], images.ImageType.REPORT_THUMB)
+			images.save_image("thumb_" + image_id, report_image["image"], images.ImageType.REPORT_THUMB)
 		except (KeyError, IOError):
 			flask.abort(500)
 
