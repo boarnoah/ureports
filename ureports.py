@@ -21,7 +21,8 @@ with app.app_context():
 		SECRET="password",
 		IMG_TYPE="png",
 		IMG_AGENT_XY=(500, 500),
-		IMG_REPORT_XY=(2000, 2000)
+		IMG_REPORT_XY=(2000, 2000),
+		IMG_REPORT_THUMB_XY=(500, 500)
 	))
 
 	# For convenience:
@@ -138,11 +139,51 @@ def api_add_agent_image():
 		flask.abort(404)
 
 	try:
-		image_path = images.save_agent_image(agent_id, payload["image"])
+		image_path = images.save_image(agent_id, payload["image"], images.ImageType.AGENT)
 		image_rel_path = os.path.relpath(image_path, start=app.config["DATA"])
 		db.update_agent(agent_id, picture=image_rel_path)
 	except (KeyError, IOError):
 		flask.abort(500)
+
+	return "", 200
+
+@app.route("/api/reports", methods=["post"])
+def api_add_report():
+	if not utils.verify_digest(flask.request.data, flask.request.headers["Authorization"]):
+		app.logger.warning("Failed HMAC Auth")
+		flask.abort(401)
+
+	payload = flask.request.get_json()
+	agent_id = payload["agent"].strip()
+
+	if utils.is_dict_empty(["agent"], payload):
+		app.logger.warning("Mandatory fields empty")
+		flask.abort(404)
+
+	agent =  db.get_agent(agent_id)
+	if agent is None:
+		#TODO: replace with API error instead
+		app.logger.warning("Attempted to upload report for nonexistent agent")
+		flask.abort(404)
+
+	#TODO: replace with proper short unique id generation
+	report_id = utils.generate_short_uuid(agent_id + str(payload["time"]), 8)
+
+	db.add_report(report_id, payload["time"], agent["location"], agent_id)
+
+	for report_image in payload["images"]:
+		image_id = report_id + "_" + report_image["location"]
+
+		try:
+			image_path = images.save_image(image_id, report_image["image"], images.ImageType.REPORT)
+			image_rel_path = os.path.relpath(image_path, start=app.config["DATA"])
+
+			db.add_report_image(image_id, image_rel_path, report_image["location"], 0, report_id)
+
+			#thumbnail image for smaller version for dashboard
+			images.save_image(image_id + "_thumb", report_image["image"], images.ImageType.REPORT_THUMB)
+		except (KeyError, IOError):
+			flask.abort(500)
 
 	return "", 200
 
