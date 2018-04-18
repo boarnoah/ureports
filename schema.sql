@@ -21,8 +21,7 @@ drop table if exists images;
 create table images (
 	id text primary key,
 	path text not null,
+	location text not null,
 	confirmed integer not null,
-	confidence real,
-	type text,
 	report text references reports(id)
 );

@@ -80,8 +80,8 @@ def get_agent(agent_id: str) -> sqlite3.Row:
 	return get_db().execute("SELECT * FROM agents where id = ?", (agent_id, )).fetchone()
 
 def add_report(report_id: str, report_time: int, location: str, agent_id: str):
-	get_db().execute("INSERT INTO reports (id, time, location, agent)", report_id, report_time, location, agent_id)
-	raise NotImplementedError
+	get_db().execute("INSERT INTO reports (id, time, location, agent) VALUES (?, ?, ?, ?)", (report_id, report_time, location, agent_id))
+	get_db().commit()
 
 def get_reports(num_reports: int = 20, start_index: int = 0) -> list:
 	#TODO: Better to lazily iterate cursor's return obj than to fetchall rows as a list () if data is big (which its not)
@@ -89,3 +89,7 @@ def get_reports(num_reports: int = 20, start_index: int = 0) -> list:
 
 def get_report(report_id: str) -> sqlite3.Row:
 	return get_db().execute("SELECT * FROM reports WHERE id = ?", (report_id, )).fetchone()
+
+def add_report_image(image_id:str, image_path:str, location: str, image_confirmed: int, report_id:str):
+	get_db().execute("INSERT INTO images (id, path, location, confirmed, report) VALUES (?, ?, ?, ?, ?)", (image_id, image_path, location, image_confirmed, report_id))
+	get_db().commit()

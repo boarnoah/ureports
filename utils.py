@@ -1,4 +1,5 @@
 import hmac
+import base64
 
 app = None
 
@@ -21,3 +22,7 @@ def is_dict_empty(keys_to_check: list, dict_to_check: dict) -> bool:
 			return True
 
 	return False
+
+def generate_short_uuid(seed_data:str, length: int) -> str:
+	b64str = bytes.decode(base64.b64encode(str.encode(seed_data)))
+	return (b64str[0:length]).lower()
