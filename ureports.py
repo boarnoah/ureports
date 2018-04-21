@@ -19,8 +19,8 @@ images.init_app(app)
 with app.app_context():
 	app.config.update(dict(
 		DATA=os.path.join(app.root_path, "data", flask.current_app.name),
-		DEBUG=True,
-		SECRET="password",
+		DEBUG=False,
+		SECRET="",
 		IMG_TYPE="png",
 		IMG_AGENT_XY=(500, 500),
 		IMG_REPORT_XY=(2000, 2000),

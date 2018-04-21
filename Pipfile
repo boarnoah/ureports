@@ -10,3 +10,6 @@ pylint = "*"
 [packages]
 flask = "*"
 pillow = "*"
+
+[requires]
+python_version = "3"

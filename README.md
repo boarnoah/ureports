@@ -24,7 +24,7 @@ Project (handled by pipenv):
 
 To install dependencies on a fresh clone (add --dev to install dev deps ex: to test with client.py):
 
-	pipenv install 
+	pipenv install --three
 
 To run app (set instead of export for windows)
 
