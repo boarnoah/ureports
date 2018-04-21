@@ -5,8 +5,7 @@ create table agents (
 	location text not null,
 	secret text not null,
 	online integer,
-	description text,
-	picture text
+	description text
 );
 
 drop table if exists reports;
@@ -20,7 +19,6 @@ create table reports (
 drop table if exists images;
 create table images (
 	id text primary key,
-	path text not null,
 	location text not null,
 	confirmed integer not null,
 	report text references reports(id)

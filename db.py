@@ -36,8 +36,7 @@ def init_folder() -> bool:
 
 def init():
 	if init_folder():
-		print("okay")
-		#app.logger.info("Folder tree (" %s ") already exists. Using it as is", app.config["DATA"])
+		app.logger.info("Folder tree (%s) already exists. Using it as is", app.config["DATA"])
 	else:
 		app.logger.info("Created folder tree at %s", app.config["DATA"])
 
@@ -49,12 +48,12 @@ def close_connection():
 	if db is not None:
 		db.close()
 
-def add_agent(agent_id: str, name: str, location: str, secret: str, online: int, description: str = None, picture: str = None):
-	get_db().execute("INSERT INTO agents (id, name, location, secret, online, description, picture) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-					(agent_id, name, location, secret, online, description, picture))
+def add_agent(agent_id: str, name: str, location: str, secret: str, online: int, description: str = None):
+	get_db().execute("INSERT INTO agents (id, name, location, secret, online, description) VALUES (?, ?, ?, ?, ?, ?)", 
+					(agent_id, name, location, secret, online, description))
 	get_db().commit()
 
-def update_agent(agent_id: str, name: str = None, location: str = None, secret: str = None, online: int = None, description: str = None, picture: str = None):
+def update_agent(agent_id: str, name: str = None, location: str = None, secret: str = None, online: int = None, description: str = None):
 	db = get_db()
 
 	if name is not None:
@@ -67,8 +66,6 @@ def update_agent(agent_id: str, name: str = None, location: str = None, secret: 
 		db.execute("UPDATE agents SET online = ? where id = ?", (online, agent_id))
 	if description is not None:
 		db.execute("UPDATE agents SET description = ? where id = ?", (description, agent_id))
-	if picture is not None:
-		db.execute("UPDATE agents SET picture = ? where id = ?", (picture, agent_id))
 
 	db.commit()
 
@@ -90,12 +87,12 @@ def get_reports(num_reports: int = 20, start_index: int = 0) -> list:
 def get_report(report_id: str) -> sqlite3.Row:
 	return get_db().execute("SELECT * FROM reports WHERE id = ?", (report_id, )).fetchone()
 
-def add_report_image(image_id:str, image_path:str, location: str, image_confirmed: int, report_id:str):
-	get_db().execute("INSERT INTO images (id, path, location, confirmed, report) VALUES (?, ?, ?, ?, ?)", (image_id, image_path, location, image_confirmed, report_id))
+def add_report_image(image_id:str, location: str, image_confirmed: int, report_id:str):
+	get_db().execute("INSERT INTO images (id, location, confirmed, report) VALUES (?, ?, ?, ?)", (image_id, location, image_confirmed, report_id))
 	get_db().commit()
 
 def get_report_image(image_id: str) -> sqlite3.Row:
-	return get_db().execute("SELECT * FROM images WHERE id = ?", (image_id))
+	return get_db().execute("SELECT * FROM images WHERE id = ?", (image_id, )).fetchone()
 
 def get_report_images(report_id: str) -> list:
-	return get_db().execute("SELECT * FROM images WHERE report = ?", (report_id)).fetchall()
+	return get_db().execute("SELECT * FROM images WHERE report = ?", (report_id, )).fetchall()

@@ -25,34 +25,20 @@
 						<td><i class="fa fa-times"></i></td>
 						<td>--</td>
 						<td>{{report.time | datetime}}</td>
-						<td><a href="/agents/{{report.agent}}">{{report.agent}}</a><</td>
+						<td><a href="/agents/{{report.agent}}">{{report.agent}}</a></td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
 		<h4>Images</h4>
-		<div class="row">
+		{% for report_image in report_images %}
 			<div class="col-sm">
-				<img src="{{ url_for('static', filename='images/mouse.jpg') }}" class="img-thumbnail report-thumbnail"></img>
+				<img src="{{ url_for('get_report_image_thumb', report_id=report.id, image_id=report_image.id) }}" class="img-thumbnail agent-thumbnail"></img>
 				<div class="alert alert-warning" role="alert">
 					<div>Confidence: 0.86 - mouse (rodent)</div>
 					<button class="btn btn-primary">Confirm</button>
 				</div>
 			</div>
-			<div class="col-sm">
-				<img src="{{ url_for('static', filename='images/mouse.jpg') }}" class="img-thumbnail report-thumbnail"></img>
-				<div class="alert alert-warning" role="alert">
-					<div>Confidence: 0.86 - mouse (rodent)</div>
-					<button class="btn btn-primary">Confirm</button>
-				</div>
-			</div>
-			<div class="col-sm">
-				<img src="{{ url_for('static', filename='images/sacks.jpg') }}" class="img-thumbnail report-thumbnail"></img>
-				<div class="alert alert-success" role="alert">
-					<div>Confidence: 0.90 - grains</div>
-					<button class="btn btn-primary">Confirm</button>
-				</div>
-			</div>
-		</div>
+		{% endfor %}
 	</div>
 {% endblock %}

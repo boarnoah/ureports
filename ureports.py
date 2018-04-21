@@ -3,6 +3,7 @@ import datetime
 import time
 
 import flask
+import werkzeug
 
 import utils
 import db
@@ -50,12 +51,12 @@ def reports():
 @app.route("/reports/<report_id>")
 def report(report_id):
 	db_report = db.get_report(report_id)
-	db_report["images"] = db.get_report_images(report_id)
+	db_report_images = db.get_report_images(report_id)
 
 	if db_report is None:
 		flask.abort(404)
 
-	return flask.render_template("report.html", report=db_report)
+	return flask.render_template("report.html", report=db_report, report_images=db_report_images)
 
 @app.route("/agents/", methods=["GET"])
 def agents():
@@ -78,34 +79,34 @@ def get_agent_image(agent_id: str):
 	if db_agent is None:
 		flask.abort(404)
 
-	if db_agent["picture"] is None:
-		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
+	file_name = werkzeug.utils.secure_filename(db_agent["id"]) + "." + app.config["IMG_TYPE"]
 
-	return flask.send_from_directory(app.config["DATA"], db_agent["picture"])
+	if os.path.isfile(os.path.join(app.config["IMG_AGENT"], file_name)):
+		return flask.send_from_directory(app.config["IMG_AGENT"], file_name)
+	else:
+		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
 
 @app.route("/reports/<report_id>/image/<image_id>", methods=["GET"])
-def get_report_image(image_id: str):
+def get_report_image(report_id: str, image_id: str):
 	db_report_image = db.get_report_image(image_id.strip())
 
-	if db_report_image is None:
-		flask.abort(404)
+	file_name = werkzeug.utils.secure_filename(db_report_image["id"]) + "." + app.config["IMG_TYPE"]
 
-	if db_report_image["path"] is None:
+	if os.path.isfile(os.path.join(app.config["IMG_REPORT"], file_name)):
+		return flask.send_from_directory(app.config["IMG_REPORT"], file_name)
+	else:
 		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
-
-	return flask.send_from_directory(app.config["DATA"], db_report_image["path"])
 
 @app.route("/reports/<report_id>/image/<image_id>/thumb", methods=["GET"])
-def get_report_image_thumb(image_id: str):
+def get_report_image_thumb(report_id: str, image_id: str):
 	db_report_image = db.get_report_image(image_id.strip())
 
-	if db_report_image is None:
-		flask.abort(404)
+	file_name = werkzeug.utils.secure_filename(db_report_image["id"]) + ".thumb." + app.config["IMG_TYPE"]
 
-	if db_report_image["path"] is None:
+	if os.path.isfile(os.path.join(app.config["IMG_REPORT"], file_name)):
+		return flask.send_from_directory(app.config["IMG_REPORT"], file_name)
+	else:
 		return flask.send_from_directory(app.static_folder, "images/agent-img-404.png")
-
-	return flask.send_from_directory(app.config["DATA"], "thumb_" + db_report_image["path"])
 
 @app.route("/manual/")
 def manual():
@@ -166,8 +167,6 @@ def api_add_agent_image():
 
 	try:
 		image_path = images.save_image(agent_id, payload["image"], images.ImageType.AGENT)
-		image_rel_path = os.path.relpath(image_path, start=app.config["DATA"])
-		db.update_agent(agent_id, picture=image_rel_path)
 	except (KeyError, IOError):
 		flask.abort(500)
 
@@ -186,7 +185,7 @@ def api_add_report():
 		app.logger.warning("Mandatory fields empty")
 		flask.abort(404)
 
-	db_agent =  db.get_agent(agent_id)
+	db_agent = db.get_agent(agent_id)
 	if agent is None:
 		#TODO: replace with API error instead
 		app.logger.warning("Attempted to upload report for nonexistent agent")
@@ -201,13 +200,11 @@ def api_add_report():
 		image_id = report_id + "_" + report_image["location"]
 
 		try:
-			image_path = images.save_image(image_id, report_image["image"], images.ImageType.REPORT)
-			image_rel_path = os.path.relpath(image_path, start=app.config["DATA"])
-
-			db.add_report_image(image_id, image_rel_path, report_image["location"], 0, report_id)
+			images.save_image(image_id, report_image["image"], images.ImageType.REPORT)
+			db.add_report_image(image_id, report_image["location"], 0, report_id)
 
 			#thumbnail image for smaller version for dashboard
-			images.save_image("thumb_" + image_id, report_image["image"], images.ImageType.REPORT_THUMB)
+			images.save_image(image_id + ".thumb", report_image["image"], images.ImageType.REPORT_THUMB)
 		except (KeyError, IOError):
 			flask.abort(500)
 

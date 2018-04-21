@@ -32,8 +32,6 @@ def save_image_disk(file_path: str, image: str, image_xy: tuple, image_format: s
 		raise
 
 def save_image(file_name: str, image: str, image_type: ImageType) -> str:
-	image_format = app.config["IMG_TYPE"]
-
 	if image_type == ImageType.AGENT:
 		img_location = app.config["IMG_AGENT"]
 		image_xy = app.config["IMG_AGENT_XY"]
@@ -44,9 +42,9 @@ def save_image(file_name: str, image: str, image_type: ImageType) -> str:
 		img_location = app.config["IMG_REPORT"]
 		image_xy = app.config["IMG_REPORT_THUMB_XY"]
 
-	secure_file_name = werkzeug.utils.secure_filename(file_name) + '.' + image_format
+	secure_file_name = werkzeug.utils.secure_filename(file_name) + '.' + app.config["IMG_TYPE"]
 	secure_file_path = os.path.join(img_location, secure_file_name)
 
-	save_image_disk(secure_file_path, image, image_xy, image_format)
+	save_image_disk(secure_file_path, image, image_xy, app.config["IMG_TYPE"])
 
 	return secure_file_path
