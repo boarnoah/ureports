@@ -31,14 +31,16 @@
 			</table>
 		</div>
 		<h4>Images</h4>
-		{% for report_image in report_images %}
-			<div class="col-sm">
-				<img src="{{ url_for('get_report_image_thumb', report_id=report.id, image_id=report_image.id) }}" class="img-thumbnail agent-thumbnail"></img>
-				<div class="alert alert-warning" role="alert">
-					<div>Confidence: 0.86 - mouse (rodent)</div>
-					<button class="btn btn-primary">Confirm</button>
+		<div class="row">
+			{% for report_image in report_images %}
+				<div class="col-sm-4">
+					<img src="{{ url_for('get_report_image_thumb', report_id=report.id, image_id=report_image.id) }}" class="img-thumbnail report-thumbnail"></img>
+					<div class="alert alert-warning">
+						<div>Confidence: 0.86 - mouse (rodent)</div>
+						<button class="btn btn-primary">Confirm</button>
+					</div>
 				</div>
-			</div>
-		{% endfor %}
+			{% endfor %}
+		</div>
 	</div>
 {% endblock %}

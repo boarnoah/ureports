@@ -1,6 +1,7 @@
 import os
 import datetime
 import time
+import random
 
 import flask
 import werkzeug
@@ -166,7 +167,7 @@ def api_add_agent_image():
 		flask.abort(404)
 
 	try:
-		image_path = images.save_image(agent_id, payload["image"], images.ImageType.AGENT)
+		images.save_image(agent_id, payload["image"], images.ImageType.AGENT)
 	except (KeyError, IOError):
 		flask.abort(500)
 
@@ -192,8 +193,8 @@ def api_add_report():
 		flask.abort(404)
 
 	#TODO: replace with proper short unique id generation
-	report_id = utils.generate_short_uuid(str(payload["time"]) + agent_id, 8)
-	
+	report_id = utils.generate_short_uuid(str(random.random() * 1000) + str(payload["time"]) + agent_id, 8)
+
 	db.add_report(report_id, payload["time"], db_agent["location"], agent_id)
 
 	for report_image in payload["images"]:
