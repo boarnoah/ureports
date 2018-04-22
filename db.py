@@ -87,6 +87,9 @@ def get_reports(num_reports: int = 20, start_index: int = 0) -> list:
 def get_report(report_id: str) -> sqlite3.Row:
 	return get_db().execute("SELECT * FROM reports WHERE id = ?", (report_id, )).fetchone()
 
+def get_reports_by_agent(agent_id:str) -> list:
+	return get_db().execute("SELECT * FROM reports where agent = ?", (agent_id, )).fetchall()
+
 def add_report_image(image_id:str, location: str, image_confirmed: int, report_id:str):
 	get_db().execute("INSERT INTO images (id, location, confirmed, report) VALUES (?, ?, ?, ?)", (image_id, location, image_confirmed, report_id))
 	get_db().commit()

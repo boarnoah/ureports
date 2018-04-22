@@ -66,11 +66,12 @@ def agents():
 @app.route("/agents/<agent_id>", methods=["GET"])
 def agent(agent_id):
 	db_agent = db.get_agent(agent_id)
+	db_agent_reports = db.get_reports_by_agent(agent_id)
 
 	if db_agent is None:
 		flask.abort(404)
 
-	return flask.render_template("agent.html", agent=db_agent)
+	return flask.render_template("agent.html", agent=db_agent, agent_reports=db_agent_reports)
 
 #TODO: refactor to get rid duplicate code
 @app.route("/agents/<agent_id>/image", methods=["GET"])
