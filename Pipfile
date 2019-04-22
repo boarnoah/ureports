@@ -8,8 +8,8 @@ requests = "*"
 pylint = "*"
 
 [packages]
-flask = "*"
-pillow = "*"
+flask = "==1.0.2"
+pillow = "==6.0.0"
 
 [requires]
-python_version = "3"
+python_version = "3.7"
